@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
@@ -11,7 +11,7 @@ app = FastAPI(title="Data Service")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,36 +49,66 @@ class ContentItem(BaseModel):
     content: str
     author_id: str
     created_at: str
+    category: Optional[str] = None
+    tags: List[str] = []
+    status: str = "published"
+    featured: bool = False
+    views: int = 0
+    likes: int = 0
 
-# Content database
+# Content database with enhanced data
 content_db = [
     {
         "id": "1", 
         "title": "Getting Started Guide", 
         "content": "This is a comprehensive guide to get you started with our platform.",
         "author_id": "1",
-        "created_at": "2025-01-01T00:00:00"
+        "created_at": "2025-01-01T00:00:00",
+        "category": "Guides",
+        "tags": ["beginner", "tutorial"],
+        "status": "published",
+        "featured": True,
+        "views": 150,
+        "likes": 45
     },
     {
         "id": "2", 
         "title": "Advanced Techniques", 
         "content": "Learn advanced techniques to maximize your productivity.",
         "author_id": "2",
-        "created_at": "2025-01-02T00:00:00"
+        "created_at": "2025-01-02T00:00:00",
+        "category": "Advanced",
+        "tags": ["advanced", "tips"],
+        "status": "published",
+        "featured": False,
+        "views": 120,
+        "likes": 30
     },
     {
         "id": "3", 
         "title": "Troubleshooting", 
         "content": "Common issues and how to solve them quickly.",
         "author_id": "1",
-        "created_at": "2025-01-03T00:00:00"
+        "created_at": "2025-01-03T00:00:00",
+        "category": "Support",
+        "tags": ["help", "troubleshooting"],
+        "status": "published",
+        "featured": False,
+        "views": 200,
+        "likes": 55
     },
     {
         "id": "4", 
         "title": "API Documentation", 
         "content": "Complete API reference with examples.",
         "author_id": "3",
-        "created_at": "2025-01-04T00:00:00"
+        "created_at": "2025-01-04T00:00:00",
+        "category": "Documentation",
+        "tags": ["api", "reference"],
+        "status": "published",
+        "featured": True,
+        "views": 180,
+        "likes": 40
     }
 ]
 
@@ -96,13 +126,62 @@ async def get_analytics():
     return analytics_db
 
 @app.get("/content", response_model=List[ContentItem])
-async def get_content():
-    return content_db
+async def get_content(
+    search: Optional[str] = None,
+    category: Optional[str] = None,
+    tag: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    featured: Optional[bool] = None,
+    status: Optional[str] = None
+):
+    filtered_content = content_db.copy()
+
+    # Apply filters
+    if search:
+        search = search.lower()
+        filtered_content = [
+            item for item in filtered_content
+            if search in item["title"].lower() or search in item["content"].lower()
+        ]
+
+    if category:
+        filtered_content = [
+            item for item in filtered_content
+            if item["category"] == category
+        ]
+
+    if tag:
+        filtered_content = [
+            item for item in filtered_content
+            if tag in item["tags"]
+        ]
+
+    if featured is not None:
+        filtered_content = [
+            item for item in filtered_content
+            if item["featured"] == featured
+        ]
+
+    if status:
+        filtered_content = [
+            item for item in filtered_content
+            if item["status"] == status
+        ]
+
+    # Apply sorting
+    if sort_by:
+        reverse = True if sort_by.startswith("-") else False
+        key = sort_by.lstrip("-")
+        filtered_content.sort(key=lambda x: x[key], reverse=reverse)
+
+    return filtered_content
 
 @app.get("/content/{content_id}", response_model=ContentItem)
 async def get_content_item(content_id: str):
     for item in content_db:
         if item["id"] == content_id:
+            # Increment views
+            item["views"] += 1
             return item
     raise HTTPException(status_code=404, detail="Content not found")
 
@@ -115,6 +194,8 @@ async def get_author_content(author_id: str):
 async def create_content(item: ContentItem):
     new_item = item.dict()
     new_item["id"] = str(len(content_db) + 1)
+    new_item["views"] = 0
+    new_item["likes"] = 0
     content_db.append(new_item)
     return new_item
 
@@ -124,6 +205,8 @@ async def update_content(content_id: str, item: ContentItem):
         if existing_item["id"] == content_id:
             updated_item = item.dict()
             updated_item["id"] = content_id
+            updated_item["views"] = existing_item["views"]
+            updated_item["likes"] = existing_item["likes"]
             content_db[i] = updated_item
             return updated_item
     raise HTTPException(status_code=404, detail="Content not found")
@@ -135,6 +218,26 @@ async def delete_content(content_id: str):
             del content_db[i]
             return {"message": "Content deleted successfully"}
     raise HTTPException(status_code=404, detail="Content not found")
+
+@app.post("/content/{content_id}/like")
+async def like_content(content_id: str):
+    for item in content_db:
+        if item["id"] == content_id:
+            item["likes"] += 1
+            return {"likes": item["likes"]}
+    raise HTTPException(status_code=404, detail="Content not found")
+
+@app.get("/content/categories")
+async def get_categories():
+    categories = set(item["category"] for item in content_db if item["category"])
+    return list(categories)
+
+@app.get("/content/tags")
+async def get_tags():
+    tags = set()
+    for item in content_db:
+        tags.update(item["tags"])
+    return list(tags)
 
 if __name__ == "__main__":
     import uvicorn
