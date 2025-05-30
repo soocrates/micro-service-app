@@ -44,7 +44,7 @@ class AnalyticsResponse(BaseModel):
     popular_content: List[Dict[str, Any]]
 
 class ContentItem(BaseModel):
-    id: str
+    id: Optional[str] = None
     title: str
     content: str
     author_id: str
@@ -113,8 +113,28 @@ async def get_author_content(author_id: str):
 
 @app.post("/content", response_model=ContentItem)
 async def create_content(item: ContentItem):
-    content_db.append(dict(item))
-    return item
+    new_item = item.dict()
+    new_item["id"] = str(len(content_db) + 1)
+    content_db.append(new_item)
+    return new_item
+
+@app.put("/content/{content_id}", response_model=ContentItem)
+async def update_content(content_id: str, item: ContentItem):
+    for i, existing_item in enumerate(content_db):
+        if existing_item["id"] == content_id:
+            updated_item = item.dict()
+            updated_item["id"] = content_id
+            content_db[i] = updated_item
+            return updated_item
+    raise HTTPException(status_code=404, detail="Content not found")
+
+@app.delete("/content/{content_id}")
+async def delete_content(content_id: str):
+    for i, item in enumerate(content_db):
+        if item["id"] == content_id:
+            del content_db[i]
+            return {"message": "Content deleted successfully"}
+    raise HTTPException(status_code=404, detail="Content not found")
 
 if __name__ == "__main__":
     import uvicorn

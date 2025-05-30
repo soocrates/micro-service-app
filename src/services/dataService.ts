@@ -2,7 +2,7 @@ import { API_DATA_SERVICE } from '../config/api';
 
 // Types
 interface ContentItem {
-  id: string;
+  id?: string;
   title: string;
   content: string;
   author_id: string;
@@ -52,7 +52,7 @@ export const fetchAuthorContent = async (authorId: string): Promise<ContentItem[
 };
 
 // Create new content
-export const createContent = async (contentData: ContentItem): Promise<ContentItem> => {
+export const createContent = async (contentData: Omit<ContentItem, 'id'>): Promise<ContentItem> => {
   const response = await fetch(`${API_DATA_SERVICE}/content`, {
     method: 'POST',
     headers: {
@@ -67,4 +67,34 @@ export const createContent = async (contentData: ContentItem): Promise<ContentIt
   }
   
   return response.json();
+};
+
+// Update content
+export const updateContent = async (contentData: ContentItem): Promise<ContentItem> => {
+  const response = await fetch(`${API_DATA_SERVICE}/content/${contentData.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(contentData),
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to update content');
+  }
+  
+  return response.json();
+};
+
+// Delete content
+export const deleteContent = async (contentId: string): Promise<void> => {
+  const response = await fetch(`${API_DATA_SERVICE}/content/${contentId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to delete content');
+  }
 };
