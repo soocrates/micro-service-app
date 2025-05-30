@@ -17,7 +17,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simple in-memory database for demo
+# Enhanced user database with real profiles
+users_db = [
+    {
+        "id": "1",
+        "username": "sarah_tech",
+        "name": "Sarah Johnson",
+        "bio": "Senior Software Engineer | Python & React Expert",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg",
+        "joined_date": "2024-01-15",
+        "total_posts": 8,
+        "followers": 245
+    },
+    {
+        "id": "2",
+        "username": "mark_developer",
+        "name": "Mark Williams",
+        "bio": "Full Stack Developer | Cloud Architecture Enthusiast",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+        "joined_date": "2024-01-20",
+        "total_posts": 12,
+        "followers": 189
+    },
+    {
+        "id": "3",
+        "username": "tech_emma",
+        "name": "Emma Davis",
+        "bio": "UX Designer & Frontend Developer | Design Systems Expert",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
+        "joined_date": "2024-02-01",
+        "total_posts": 6,
+        "followers": 312
+    }
+]
+
+# Enhanced analytics data
 analytics_db = {
     "daily_visits": [
         {"date": (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"), 
@@ -25,17 +59,128 @@ analytics_db = {
         for i in range(7)
     ],
     "user_activity": [
-        {"user_id": "1", "actions": random.randint(10, 50)},
-        {"user_id": "2", "actions": random.randint(10, 50)},
-        {"user_id": "3", "actions": random.randint(10, 50)}
+        {"user_id": "1", "actions": 42, "posts": 8, "comments": 16, "likes_received": 156},
+        {"user_id": "2", "actions": 38, "posts": 12, "comments": 24, "likes_received": 198},
+        {"user_id": "3", "actions": 35, "posts": 6, "comments": 18, "likes_received": 142}
     ],
     "popular_content": [
-        {"id": "1", "title": "Getting Started Guide", "views": random.randint(50, 200)},
-        {"id": "2", "title": "Advanced Techniques", "views": random.randint(50, 200)},
-        {"id": "3", "title": "Troubleshooting", "views": random.randint(50, 200)},
-        {"id": "4", "title": "API Documentation", "views": random.randint(50, 200)}
+        {"id": "1", "title": "Building Scalable React Applications", "views": 342, "likes": 89},
+        {"id": "2", "title": "Python Microservices Architecture", "views": 287, "likes": 76},
+        {"id": "3", "title": "Modern UX Design Principles", "views": 256, "likes": 68},
+        {"id": "4", "title": "Cloud Deployment Strategies", "views": 198, "likes": 45}
     ]
 }
+
+# Enhanced content database with real blog posts
+content_db = [
+    {
+        "id": "1",
+        "title": "Building Scalable React Applications",
+        "content": """
+React has become the go-to library for building modern web applications. In this comprehensive guide, 
+I'll share my experience scaling React applications from small projects to enterprise-level solutions.
+
+Key points we'll cover:
+- Component architecture best practices
+- State management strategies
+- Performance optimization techniques
+- Code splitting and lazy loading
+- Testing strategies for large applications
+
+Based on my experience leading frontend development at major tech companies, these practices have 
+proven invaluable in maintaining large-scale React applications.
+        """,
+        "author_id": "1",
+        "created_at": "2025-01-01T10:30:00",
+        "category": "Frontend Development",
+        "tags": ["react", "javascript", "web development", "performance"],
+        "status": "published",
+        "featured": True,
+        "views": 342,
+        "likes": 89,
+        "comments": 24
+    },
+    {
+        "id": "2",
+        "title": "Python Microservices Architecture",
+        "content": """
+Microservices architecture has revolutionized how we build backend systems. This post explores 
+implementing microservices using Python, FastAPI, and modern cloud technologies.
+
+We'll explore:
+- Service decomposition strategies
+- Inter-service communication patterns
+- API gateway implementation
+- Monitoring and logging
+- Deployment and scaling
+
+Drawing from my experience building microservices at scale, I'll share practical insights and 
+real-world examples.
+        """,
+        "author_id": "2",
+        "created_at": "2025-01-02T14:15:00",
+        "category": "Backend Development",
+        "tags": ["python", "microservices", "fastapi", "architecture"],
+        "status": "published",
+        "featured": True,
+        "views": 287,
+        "likes": 76,
+        "comments": 18
+    },
+    {
+        "id": "3",
+        "title": "Modern UX Design Principles",
+        "content": """
+Creating intuitive user experiences is crucial for modern applications. In this article, I'll share 
+key UX design principles that have proven successful in my projects.
+
+Topics covered:
+- User-centered design approach
+- Information architecture
+- Interactive prototyping
+- Usability testing methods
+- Accessibility considerations
+
+These insights come from years of experience designing user interfaces for various applications 
+and platforms.
+        """,
+        "author_id": "3",
+        "created_at": "2025-01-03T09:45:00",
+        "category": "UX Design",
+        "tags": ["ux", "design", "user experience", "accessibility"],
+        "status": "published",
+        "featured": False,
+        "views": 256,
+        "likes": 68,
+        "comments": 15
+    },
+    {
+        "id": "4",
+        "title": "Cloud Deployment Strategies",
+        "content": """
+Effective cloud deployment is critical for modern applications. This guide covers essential 
+strategies for deploying applications in the cloud.
+
+We'll discuss:
+- Container orchestration with Kubernetes
+- CI/CD pipeline setup
+- Multi-region deployment
+- Cost optimization techniques
+- Security best practices
+
+Based on real-world experience deploying applications across different cloud providers.
+        """,
+        "author_id": "2",
+        "created_at": "2025-01-04T16:20:00",
+        "category": "DevOps",
+        "tags": ["cloud", "deployment", "kubernetes", "devops"],
+        "status": "published",
+        "featured": True,
+        "views": 198,
+        "likes": 45,
+        "comments": 12
+    }
+]
 
 # Models
 class AnalyticsResponse(BaseModel):
@@ -55,62 +200,17 @@ class ContentItem(BaseModel):
     featured: bool = False
     views: int = 0
     likes: int = 0
+    comments: int = 0
 
-# Content database with enhanced data
-content_db = [
-    {
-        "id": "1", 
-        "title": "Getting Started Guide", 
-        "content": "This is a comprehensive guide to get you started with our platform.",
-        "author_id": "1",
-        "created_at": "2025-01-01T00:00:00",
-        "category": "Guides",
-        "tags": ["beginner", "tutorial"],
-        "status": "published",
-        "featured": True,
-        "views": 150,
-        "likes": 45
-    },
-    {
-        "id": "2", 
-        "title": "Advanced Techniques", 
-        "content": "Learn advanced techniques to maximize your productivity.",
-        "author_id": "2",
-        "created_at": "2025-01-02T00:00:00",
-        "category": "Advanced",
-        "tags": ["advanced", "tips"],
-        "status": "published",
-        "featured": False,
-        "views": 120,
-        "likes": 30
-    },
-    {
-        "id": "3", 
-        "title": "Troubleshooting", 
-        "content": "Common issues and how to solve them quickly.",
-        "author_id": "1",
-        "created_at": "2025-01-03T00:00:00",
-        "category": "Support",
-        "tags": ["help", "troubleshooting"],
-        "status": "published",
-        "featured": False,
-        "views": 200,
-        "likes": 55
-    },
-    {
-        "id": "4", 
-        "title": "API Documentation", 
-        "content": "Complete API reference with examples.",
-        "author_id": "3",
-        "created_at": "2025-01-04T00:00:00",
-        "category": "Documentation",
-        "tags": ["api", "reference"],
-        "status": "published",
-        "featured": True,
-        "views": 180,
-        "likes": 40
-    }
-]
+class User(BaseModel):
+    id: str
+    username: str
+    name: str
+    bio: str
+    avatar: str
+    joined_date: str
+    total_posts: int
+    followers: int
 
 # Routes
 @app.get("/")
@@ -124,6 +224,17 @@ async def health():
 @app.get("/analytics", response_model=AnalyticsResponse)
 async def get_analytics():
     return analytics_db
+
+@app.get("/users", response_model=List[User])
+async def get_users():
+    return users_db
+
+@app.get("/users/{user_id}", response_model=User)
+async def get_user(user_id: str):
+    user = next((user for user in users_db if user["id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 @app.get("/content", response_model=List[ContentItem])
 async def get_content(
@@ -196,6 +307,7 @@ async def create_content(item: ContentItem):
     new_item["id"] = str(len(content_db) + 1)
     new_item["views"] = 0
     new_item["likes"] = 0
+    new_item["comments"] = 0
     content_db.append(new_item)
     return new_item
 
@@ -207,6 +319,7 @@ async def update_content(content_id: str, item: ContentItem):
             updated_item["id"] = content_id
             updated_item["views"] = existing_item["views"]
             updated_item["likes"] = existing_item["likes"]
+            updated_item["comments"] = existing_item["comments"]
             content_db[i] = updated_item
             return updated_item
     raise HTTPException(status_code=404, detail="Content not found")
